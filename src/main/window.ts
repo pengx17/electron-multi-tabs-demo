@@ -1,100 +1,248 @@
-import { BrowserWindow } from 'electron';
-import electronWindowState from 'electron-window-state';
-import { join } from 'path';
+import { BrowserView, BrowserWindow } from "electron";
+import electronWindowState from "electron-window-state";
+import { join } from "node:path";
+import { nanoid } from "nanoid";
 
-import { logger } from './logger';
+import { logger } from "./logger";
 
 const IS_DEV: boolean =
-  process.env.NODE_ENV === 'development' && !process.env.CI;
+  process.env.NODE_ENV === "development" && !process.env.CI;
 
-const DEV_TOOL = process.env.DEV_TOOL === 'true';
+const DEV_TOOL = process.env.DEV_TOOL === "true";
 
-async function createWindow() {
-  logger.info('create window');
-  const mainWindowState = electronWindowState({
-    defaultWidth: 1000,
-    defaultHeight: 800,
-  });
+const TAB_HEIGHT = 40;
 
-  const browserWindow = new BrowserWindow({
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 24, y: 18 },
-    x: mainWindowState.x,
-    y: mainWindowState.y,
-    width: mainWindowState.width,
-    minWidth: 640,
-    transparent: true,
-    visualEffectState: 'active',
-    vibrancy: 'under-window',
-    height: mainWindowState.height,
-    show: false, // Use 'ready-to-show' event to show window
-    webPreferences: {
-      webgl: true,
-      contextIsolation: true,
-      sandbox: false,
-      webviewTag: false, // The webview tag is not recommended. Consider alternatives like iframe or Electron's BrowserView. https://www.electronjs.org/docs/latest/api/webview-tag#warning
-      spellcheck: false, // FIXME: enable?
-      preload: join(__dirname, '../preload/index.js'),
-    },
-  });
+class AppWindow {
+  // multiple tabs
+  views = new Map<string, BrowserView>();
+  window: BrowserWindow;
+  activeViewId: string;
+  listeners: Record<string, ((...args: any[]) => void)[]> = {};
 
-  mainWindowState.manage(browserWindow);
+  constructor() {
+    this.window = this.createWindow();
+  }
 
-  /**
-   * If you install `show: true` then it can cause issues when trying to close the window.
-   * Use `show: false` and listener events `ready-to-show` to fix these issues.
-   *
-   * @see https://github.com/electron/electron/issues/25012
-   */
-  browserWindow.on('ready-to-show', () => {
-    if (IS_DEV) {
-      // do not gain focus in dev mode
-      browserWindow.showInactive();
-    } else {
-      browserWindow.show();
+  get viewIds() {
+    // this is an ordered list
+    return [...this.views.keys()];
+  }
+
+  createWindow() {
+    logger.info("create window");
+    const mainWindowState = electronWindowState({
+      defaultWidth: 1000,
+      defaultHeight: 800,
+    });
+
+    const window = new BrowserWindow({
+      titleBarStyle: "hiddenInset",
+      x: mainWindowState.x,
+      y: mainWindowState.y,
+      height: mainWindowState.height,
+      width: mainWindowState.width,
+      visualEffectState: "active",
+      vibrancy: "under-window",
+      show: false,
+    });
+
+    this.window = window;
+
+    window.once("close", (e) => {
+      if (window.webContents.isDevToolsOpened()) {
+        window.webContents.closeDevTools();
+      }
+      e.preventDefault();
+      window.destroy();
+      // TODO: gracefully close the app, for example, ask user to save unsaved changes
+    });
+
+    this.addShellView();
+    this.addAppView();
+
+    return window;
+  }
+
+  addShellView() {
+    const pageUrl = process.env.RENDERER_SHELL_URL || "file://./index.html";
+    const view = new BrowserView({
+      webPreferences: {
+        webgl: true,
+        contextIsolation: true,
+        sandbox: false,
+        spellcheck: false,
+        preload: join(__dirname, "../preload/index.js"),
+        additionalArguments: [`--id=shell`],
+      },
+    });
+
+    this.views.set("shell", view);
+
+    this.window.on("resize", () => {
+      this.resizeView("shell");
+    });
+
+    this.window.addBrowserView(view);
+    view.webContents.loadURL(pageUrl);
+    logger.info("add shell");
+
+    this.resizeView("shell");
+
+    view.webContents.openDevTools();
+  }
+
+  resizeView(id: string) {
+    const view = this.views.get(id);
+    const { width, height } = this.window.getContentBounds();
+    if (id === "shell") {
+      view.setBounds({ x: 0, y: 0, width, height });
+      return;
     }
 
-    logger.info('main window is ready to show');
-
-    if (DEV_TOOL) {
-      browserWindow.webContents.openDevTools();
+    if (view) {
+      if (this.activeViewId === id) {
+        view.setBounds({
+          x: 0,
+          y: TAB_HEIGHT,
+          width,
+          height: height - TAB_HEIGHT,
+        });
+      } else {
+        // hide it
+        view.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+      }
     }
-  });
+  }
 
-  browserWindow.on('close', e => {
-    e.preventDefault();
-    browserWindow.destroy();
-    // TODO: gracefully close the app, for example, ask user to save unsaved changes
-  });
+  addAppView() {
+    const id = nanoid();
+    const pageUrl = process.env.RENDERER_APP_URL || "file://./index.html";
+    const view = new BrowserView({
+      webPreferences: {
+        webgl: true,
+        contextIsolation: true,
+        sandbox: false,
+        spellcheck: false,
+        preload: join(__dirname, "../preload/index.js"),
+        additionalArguments: [`--id=${id}`],
+      },
+    });
+    this.window.addBrowserView(view);
 
-  /**
-   * URL for main window.
-   */
-  const pageUrl = process.env.DEV_SERVER_URL || 'file://./index.html'; // see protocol.ts
+    this.views.set(id, view);
+    this.window.setTopBrowserView(view);
 
-  await browserWindow.loadURL(pageUrl);
+    this.window.on("resize", () => {
+      this.resizeView(id);
+    });
 
-  logger.info('main window is loaded at' + pageUrl);
+    view.webContents.loadURL(pageUrl);
+    logger.info("add view", id);
 
-  return browserWindow;
+    this.window.showInactive();
+
+    this.showView(id);
+    this.resizeView(id);
+    this.notifyTabsUpdated();
+  }
+
+  removeView(id: string) {
+    const view = this.views.get(id);
+    if (view) {
+      this.window.removeBrowserView(view);
+      this.views.delete(id);
+    }
+    this.notifyTabsUpdated();
+  }
+
+  toWebContentId(id: string) {
+    const view = this.views.get(id);
+    if (view) {
+      return view.webContents.id;
+    }
+    return -1;
+  }
+
+  fromWebContentId(webContentId: number) {
+    for (const [id, view] of this.views.entries()) {
+      if (view.webContents.id === webContentId) {
+        return id;
+      }
+    }
+    return undefined;
+  }
+
+  showView(id: string) {
+    this.activeViewId = id;
+    const view = this.views.get(id);
+    if (view) {
+      this.window.setTopBrowserView(view);
+    }
+    this.revealDevTools(id);
+    this.notifyActiveTabChanged();
+  }
+
+  closeDevTools() {
+    if (this.window.webContents.isDevToolsOpened()) {
+      this.window.webContents.closeDevTools();
+    }
+
+    for (const [id, view] of this.views) {
+      if (view.webContents.isDevToolsOpened() && id !== "shell") {
+        view.webContents.closeDevTools();
+      }
+    }
+  }
+
+  revealDevTools(id: string) {
+    this.closeDevTools();
+    const view = this.views.get(id);
+    if (view) {
+      view.webContents.openDevTools();
+    }
+  }
+
+  onTabsUpdated(callback: (tabs: string[]) => void) {
+    this.listeners.tabsUpdated = this.listeners.tabsUpdated || [];
+    this.listeners.tabsUpdated.push(() => {
+      callback(this.viewIds);
+    });
+  }
+
+  onActiveTabChanged(callback: (tabId: string) => void) {
+    this.listeners.activeTabChanged = this.listeners.activeTabChanged || [];
+    this.listeners.activeTabChanged.push(() => {
+      callback(this.activeViewId);
+    });
+  }
+
+  notifyTabsUpdated() {
+    if (this.listeners.tabsUpdated) {
+      this.listeners.tabsUpdated.forEach((callback) => {
+        callback(this.viewIds);
+      });
+    }
+  }
+
+  notifyActiveTabChanged() {
+    if (this.listeners.activeTabChanged) {
+      this.listeners.activeTabChanged.forEach((callback) => {
+        callback(this.activeViewId);
+      });
+    }
+
+    this.views.forEach((_, id) => {
+      this.resizeView(id);
+    });
+  }
 }
 
-// singleton
-let browserWindow: Electron.BrowserWindow | undefined;
-/**
- * Restore existing BrowserWindow or Create new BrowserWindow
- */
-export async function restoreOrCreateWindow() {
-  browserWindow = BrowserWindow.getAllWindows().find(w => !w.isDestroyed());
+let window: AppWindow;
 
-  if (browserWindow === undefined) {
-    browserWindow = await createWindow();
+export function getOrCreateAppWindow() {
+  if (!window) {
+    // will create a new browser window on instantiation
+    window = new AppWindow();
   }
-
-  if (browserWindow.isMinimized()) {
-    browserWindow.restore();
-    logger.info('restore main window');
-  }
-
-  return browserWindow;
+  return window;
 }

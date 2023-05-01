@@ -1,0 +1,1 @@
+/// <reference types="../preload/types.d.ts" />

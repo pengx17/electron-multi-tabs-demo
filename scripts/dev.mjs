@@ -17,9 +17,12 @@ const stderrFilterPatterns = [
 ];
 
 // hard-coded for now:
-// fixme(xp): report error if app is not running on DEV_SERVER_URL
-const DEV_SERVER_URL = (process.env.DEV_SERVER_URL =
-  process.env.DEV_SERVER_URL || "http://localhost:5173");
+// fixme(xp): report error if app is not running on RENDERER_APP_URL
+const RENDERER_APP_URL = (process.env.RENDERER_APP_URL =
+  process.env.RENDERER_APP_URL || "http://localhost:5173");
+
+const RENDERER_SHELL_URL = (process.env.RENDERER_SHELL_URL =
+  process.env.RENDERER_SHELL_URL || "http://localhost:5174");
 
 /** @type {ChildProcessWithoutNullStreams | null} */
 let spawnProcess = null;
@@ -52,24 +55,6 @@ function spawnOrReloadElectron() {
 }
 
 const common = config();
-
-function watchRenderer() {
-  const rendererBuild = spawn('vite');
-
-  rendererBuild.stdout.on("data", (d) => {
-    let str = d.toString().trim();
-    if (str) {
-      console.log(str);
-    }
-  });
-  rendererBuild.stderr.on("data", (d) => {
-    const data = d.toString().trim();
-    if (!data) return;
-    const mayIgnore = stderrFilterPatterns.some((r) => r.test(data));
-    if (mayIgnore) return;
-    console.error(data);
-  });
-}
 
 function watchPreload() {
   return new Promise(async (res) => {
@@ -106,8 +91,12 @@ async function watchMain() {
       "process.env.NODE_ENV": `"${mode}"`,
     };
 
-    if (DEV_SERVER_URL) {
-      define["process.env.DEV_SERVER_URL"] = `"${DEV_SERVER_URL}"`;
+    if (RENDERER_APP_URL) {
+      define["process.env.RENDERER_APP_URL"] = `"${RENDERER_APP_URL}"`;
+    }
+
+    if (RENDERER_SHELL_URL) {
+      define["process.env.RENDERER_SHELL_URL"] = `"${RENDERER_SHELL_URL}"`;
     }
 
     let initialBuild = false;
@@ -126,6 +115,7 @@ async function watchMain() {
                 spawnOrReloadElectron();
               } else {
                 res();
+                initialBuild = true;
               }
             });
           },
@@ -137,7 +127,6 @@ async function watchMain() {
 }
 
 async function main() {
-  watchRenderer();
   await watchPreload();
   await watchMain();
   spawnOrReloadElectron();

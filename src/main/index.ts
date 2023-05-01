@@ -1,7 +1,8 @@
 import { app } from "electron";
 
 import { logger } from "./logger";
-import { restoreOrCreateWindow } from "./window";
+import { getOrCreateAppWindow } from "./window";
+import { registerHandlers } from "./handlers";
 
 /**
  * Prevent multiple instances
@@ -13,14 +14,6 @@ if (!isSingleInstance) {
   process.exit(0);
 }
 
-app.on("second-instance", () => {
-  restoreOrCreateWindow();
-});
-
-app.on("open-url", async (_, _url) => {
-  // todo: handle `affine://...` urls
-});
-
 /**
  * Shout down background process if all windows was closed
  */
@@ -31,14 +24,12 @@ app.on("window-all-closed", () => {
 });
 
 /**
- * @see https://www.electronjs.org/docs/v14-x-y/api/app#event-activate-macos Event: 'activate'
- */
-app.on("activate", restoreOrCreateWindow);
-
-/**
  * Create app window when background process will be ready
  */
 app
   .whenReady()
-  .then(restoreOrCreateWindow)
+  .then(getOrCreateAppWindow)
+  .then(registerHandlers)
   .catch((e) => console.error("Failed create window:", e));
+
+app.name = "Affine";

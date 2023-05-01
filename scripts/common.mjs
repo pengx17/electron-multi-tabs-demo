@@ -14,7 +14,7 @@ export const config = () => {
       bundle: true,
       target: `node${NODE_MAJOR_VERSION}`,
       platform: 'node',
-      external: ['electron'],
+      external: ['electron', 'electron-log', 'electron-window-state'],
     },
     preload: {
       entryPoints: [resolve(root, './src/preload/index.ts')],
