@@ -18,7 +18,7 @@ export const config = () => {
     },
     preload: {
       entryPoints: [resolve(root, './src/preload/index.ts')],
-      outdir: resolve(root, './dist/layers'),
+      outdir: resolve(root, './dist/preload'),
       bundle: true,
       target: `node${NODE_MAJOR_VERSION}`,
       platform: 'node',

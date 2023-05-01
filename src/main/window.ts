@@ -1,4 +1,4 @@
-import { BrowserWindow, nativeTheme } from 'electron';
+import { BrowserWindow } from 'electron';
 import electronWindowState from 'electron-window-state';
 import { join } from 'path';
 
