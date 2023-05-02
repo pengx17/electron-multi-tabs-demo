@@ -50,7 +50,7 @@ export const App = () => {
               <div
                 key={id}
                 className={
-                  "px-4 py-2 bg-slate-200 hover:bg-slate-300 flex items-center" +
+                  "group px-4 py-2 bg-slate-200 hover:bg-slate-300 flex items-center" +
                   (id === activeTabId ? " bg-slate-300" : "")
                 }
                 onClick={() => {
@@ -61,7 +61,7 @@ export const App = () => {
 
                 {canClose && (
                   <button
-                    className="ml-2 w-4 h-4 bg-slate-200 hover:bg-slate-100 text-[10px]"
+                    className="invisible group-hover:visible ml-2 w-4 h-4 bg-slate-200 hover:bg-slate-100 text-[10px]"
                     onClick={() => {
                       window.apis.ui.removeTab(id);
                     }}
