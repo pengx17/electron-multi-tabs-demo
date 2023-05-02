@@ -1,5 +1,5 @@
-import path, { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'node:path';
 
 /** @type {import('vite').UserConfig} */
 export default {
@@ -7,5 +7,5 @@ export default {
     port: 5173,
   },
   plugins: [react()],
-  cacheDir: resolve(__dirname, './vite'),
+  cacheDir: resolve(__dirname, './.vite'),
 }

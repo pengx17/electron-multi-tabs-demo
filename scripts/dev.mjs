@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { execSync, spawn } from "node:child_process";
 
 import electronPath from "electron";
 import * as esbuild from "esbuild";
@@ -110,6 +110,7 @@ async function watchMain() {
           name: "electron-dev:reload-app-on-main-change",
           setup(build) {
             build.onEnd(() => {
+              execSync('yarn generate-handlers-meta');
               if (initialBuild) {
                 console.log(`[main] has changed, [re]launching electron...`);
                 spawnOrReloadElectron();
@@ -127,8 +128,8 @@ async function watchMain() {
 }
 
 async function main() {
-  await watchPreload();
   await watchMain();
+  await watchPreload();
   spawnOrReloadElectron();
   console.log(`Electron is started, watching for changes...`);
 }

@@ -43,30 +43,30 @@ export const App = () => {
         data-test-id="app-header"
         className="app-region-drag bg-slate-50 h-[40px] min-w-full flex items-end overflow-auto"
       >
-        <div className="h-[32px] px-24 flex gap-1 whitespace-nowrap app-region-no-drag">
+        <div className="h-[32px] px-4 flex gap-1 whitespace-nowrap app-region-no-drag select-none">
           {tabIds.map((id) => {
             if (id === "shell") return null;
             return (
               <div
                 key={id}
                 className={
-                  "px-4 py-2 bg-slate-200 hover:bg-slate-300 select-none flex items-center" +
+                  "px-4 py-2 bg-slate-200 hover:bg-slate-300 flex items-center" +
                   (id === activeTabId ? " bg-slate-300" : "")
                 }
                 onClick={() => {
                   window.apis.ui.showTab(id);
                 }}
               >
-                {id}
+                {id.substring(0, 4)}
 
                 {canClose && (
                   <button
-                    className="ml-2 w-4 h-4 bg-slate-200 hover:bg-slate-100 text-[12px]"
+                    className="ml-2 w-4 h-4 bg-slate-200 hover:bg-slate-100 text-[10px]"
                     onClick={() => {
                       window.apis.ui.removeTab(id);
                     }}
                   >
-                    X
+                    关
                   </button>
                 )}
               </div>
@@ -78,7 +78,7 @@ export const App = () => {
               window.apis.ui.addNewTab();
             }}
           >
-            +
+            新
           </button>
         </div>
       </div>

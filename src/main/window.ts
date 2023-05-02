@@ -70,6 +70,8 @@ class AppWindow {
 
     this.window = window;
 
+    window.setWindowButtonVisibility(false);
+
     window.once("close", (e) => {
       if (window.webContents.isDevToolsOpened()) {
         window.webContents.closeDevTools();
