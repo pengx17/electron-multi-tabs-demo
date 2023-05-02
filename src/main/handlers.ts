@@ -4,7 +4,7 @@ import { logger } from "./logger";
 
 type Handler = (e: Electron.IpcMainInvokeEvent, ...args: any[]) => Promise<any>;
 
-export const handlers = {
+export const uiHandlers = {
   addNewTab: async () => {
     const window = getOrCreateAppWindow();
     window.addAppView();
@@ -33,47 +33,56 @@ export const handlers = {
     const window = getOrCreateAppWindow();
     return window.fromWebContentId(e.sender.id);
   },
+  revealDevTools: async (e) => {
+    const window = getOrCreateAppWindow();
+    window.revealDevTools(window.fromWebContentId(e.sender.id));
+  },
 } satisfies Record<string, Handler>;
+
+export const handlers = {
+  ui: uiHandlers
+}
 
 export const events = {
   onTabsUpdated: () => {
     const window = getOrCreateAppWindow();
     const callback: (tabs: string[]) => void = (tabs) => {
-      window.views.forEach((view) => {
+      window.allViews.forEach((view) => {
         view.webContents.send("onTabsUpdated", tabs);
       });
     };
-    window.onTabsUpdated(callback);
+    return window.viewIds$.subscribe((ids) => {
+      callback(ids);
+    });
   },
   onActiveTabChanged: () => {
     const window = getOrCreateAppWindow();
     const callback: (tab: string) => void = (tab) => {
-      window.views.forEach((view) => {
+      window.allViews.forEach((view) => {
         view.webContents.send("onActiveTabChanged", tab);
       });
     };
-    window.onActiveTabChanged(callback);
-  }
+    return window.activeViewId$.subscribe((id) => {
+      callback(id);
+    });
+  },
 };
 
 export function registerHandlers() {
-  const window = getOrCreateAppWindow();
-  for (const [name, handler] of Object.entries(handlers)) {
-    logger.info(`Register handler "${name}"`);
-    ipcMain.handle(name, (e, ...args) => {
-      logger.info(
-        `Invoke handler "${name}" with args: [`,
-        ...args,
-        "], from",
-        window.fromWebContentId(e.sender.id)
-      );
-      return (handler as Handler)(e, ...args);
-    });
+  for (const [namespace, namespaceHandlers] of Object.entries(handlers)) {
+    for (const [key, handler] of Object.entries(namespaceHandlers)) {
+      const name = `${namespace}:${key}`;
+      logger.info(`Register handler "${name}"`);
+      ipcMain.handle(name, handler);
+    }
   }
 
   // register events
   for (const [name, handler] of Object.entries(events)) {
     logger.info(`Register event "${name}"`);
-    (handler as Function)();
+    const subscription = handler();
+    app.on("before-quit", () => {
+      subscription.unsubscribe();
+    });
   }
 }

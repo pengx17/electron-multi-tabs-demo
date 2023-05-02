@@ -4,7 +4,7 @@ const useTabIds = () => {
   const [tabIds, setTabIds] = useState<string[]>([]);
 
   useEffect(() => {
-    window.apis.getTabs().then((ids) => {
+    window.apis.ui.getTabs().then((ids) => {
       setTabIds(ids);
     });
 
@@ -20,7 +20,7 @@ const useActiveTabId = () => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
 
   useEffect(() => {
-    window.apis.getActiveTab().then((id) => {
+    window.apis.ui.getActiveTab().then((id) => {
       setActiveTabId(id);
     });
 
@@ -35,46 +35,52 @@ const useActiveTabId = () => {
 export const App = () => {
   const tabIds = useTabIds();
   const activeTabId = useActiveTabId();
+  const canClose = tabIds.length > 1;
+
   return (
     <div className="w-full h-full flex">
       <div
         data-test-id="app-header"
-        className="app-region-drag bg-slate-50 h-[40px] w-full pl-24 flex gap-1"
+        className="app-region-drag bg-slate-50 h-[40px] min-w-full flex items-end overflow-auto"
       >
-        {tabIds.map((id) => {
-          if (id === "shell") return null;
-          return (
-            <div
-              key={id}
-              className={
-                "px-4 py-2 bg-slate-200 hover:bg-slate-300 app-region-no-drag select-none" +
-                (id === activeTabId ? " bg-slate-300" : "")
-              }
-              onClick={() => {
-                window.apis.showTab(id);
-              }}
-            >
-              {id}
-
-              <button
-                className="ml-2 px-2 py-1 bg-slate-200 hover:bg-slate-300 app-region-no-drag"
+        <div className="h-[32px] px-24 flex gap-1 whitespace-nowrap app-region-no-drag">
+          {tabIds.map((id) => {
+            if (id === "shell") return null;
+            return (
+              <div
+                key={id}
+                className={
+                  "px-4 py-2 bg-slate-200 hover:bg-slate-300 select-none flex items-center" +
+                  (id === activeTabId ? " bg-slate-300" : "")
+                }
                 onClick={() => {
-                  window.apis.removeTab(id);
+                  window.apis.ui.showTab(id);
                 }}
               >
-                x
-              </button>
-            </div>
-          );
-        })}
-        <button
-          className="px-4 py-2 bg-slate-200 hover:bg-slate-300 app-region-no-drag"
-          onClick={() => {
-            window.apis.addNewTab();
-          }}
-        >
-          +
-        </button>
+                {id}
+
+                {canClose && (
+                  <button
+                    className="ml-2 w-4 h-4 bg-slate-200 hover:bg-slate-100 text-[12px]"
+                    onClick={() => {
+                      window.apis.ui.removeTab(id);
+                    }}
+                  >
+                    X
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          <button
+            className="px-4 py-2 bg-slate-200 hover:bg-slate-300 flex items-center"
+            onClick={() => {
+              window.apis.ui.addNewTab();
+            }}
+          >
+            +
+          </button>
+        </div>
       </div>
     </div>
   );

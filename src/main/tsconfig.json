@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "downlevelIteration": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "target": "ESNext",
+    "moduleResolution": "node"
   }
 }

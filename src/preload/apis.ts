@@ -5,27 +5,36 @@ type WithoutFirstParameter<T> = T extends (_: any, ...args: infer P) => infer R
   ? (...args: P) => R
   : T;
 
-type HandlerMapWithoutEvent = {
-  [K in keyof typeof handlers]: WithoutFirstParameter<(typeof handlers)[K]>;
-};
+type HandlersMap<N extends keyof typeof handlers> = {
+  [K in keyof typeof handlers[N]]: WithoutFirstParameter<(typeof handlers)[N][K]>;
+}
+
+type Handlers = {
+  [N in keyof typeof handlers]: HandlersMap<N>;
+}
 
 export const apis = (() => {
-  const all = Object.keys(handlers).map((name) => {
-    return [
-      name,
-      (...args) => {
-        console.log("Invoke handler", name, "with args:", args);
-        return ipcRenderer.invoke(name, ...args);
-      },
-    ];
+  const namespaces = Object.keys(handlers) as (keyof typeof handlers)[];
+  const all = namespaces.map((namespace) => {
+    const namespaceHandlers = handlers[namespace];
+    const namespaceApis = Object.keys(namespaceHandlers).map((name) => {
+      const channel = `${namespace}:${name}`;
+      return [
+        name,
+        (...args) => {
+          console.log("Invoke handler", channel, "with args:", args);
+          return ipcRenderer.invoke(channel, ...args);
+        },
+      ];
+    });
+    return [namespace, Object.fromEntries(namespaceApis)];
   });
-  return Object.fromEntries(all) as HandlerMapWithoutEvent;
+  return Object.fromEntries(all) as Handlers;
 })();
 
 export const events = {
   onTabsUpdated: (callback: (tabs: string[]) => void) => {
     ipcRenderer.on("onTabsUpdated", (_, tabs) => {
-      console.log("onTabsUpdated", tabs);
       callback(tabs);
     });
   },
@@ -33,7 +42,7 @@ export const events = {
     ipcRenderer.on("onActiveTabChanged", (_, tab) => {
       callback(tab);
     });
-  }
+  },
 };
 
 export const appInfo = {

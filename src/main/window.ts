@@ -2,30 +2,52 @@ import { BrowserView, BrowserWindow } from "electron";
 import electronWindowState from "electron-window-state";
 import { join } from "node:path";
 import { nanoid } from "nanoid";
+import { BehaviorSubject, combineLatest, map, merge, zip } from "rxjs";
 
 import { logger } from "./logger";
-
-const IS_DEV: boolean =
-  process.env.NODE_ENV === "development" && !process.env.CI;
-
-const DEV_TOOL = process.env.DEV_TOOL === "true";
 
 const TAB_HEIGHT = 40;
 
 class AppWindow {
   // multiple tabs
-  views = new Map<string, BrowserView>();
   window: BrowserWindow;
-  activeViewId: string;
-  listeners: Record<string, ((...args: any[]) => void)[]> = {};
+  shellView: BrowserView;
+  #views$ = new BehaviorSubject<Map<string, BrowserView>>(
+    new Map<string, BrowserView>()
+  );
+  #activeViewId$ = new BehaviorSubject<string>(null);
+
+  views$ = this.#views$.asObservable();
+  viewIds$ = this.#views$.pipe(map((views) => Array.from(views.keys())));
+  activeViewId$ = this.#activeViewId$.asObservable();
 
   constructor() {
     this.window = this.createWindow();
   }
 
+  get views() {
+    return this.#views$.value;
+  }
+
+  get allViews() {
+    // all views including shell view
+    return [this.shellView, ...this.views.values()];
+  }
+
   get viewIds() {
-    // this is an ordered list
-    return [...this.views.keys()];
+    return Array.from(this.views.keys());
+  }
+
+  get activeViewId() {
+    return this.#activeViewId$.value;
+  }
+
+  getViewById(id: string) {
+    if (id === 'shell') {
+      return this.shellView;
+    } else {
+      return this.views.get(id);
+    }
   }
 
   createWindow() {
@@ -57,8 +79,27 @@ class AppWindow {
       // TODO: gracefully close the app, for example, ask user to save unsaved changes
     });
 
+    this.#views$.next(this.views);
+
     this.addShellView();
     this.addAppView();
+
+    // local listeners
+    this.#activeViewId$.subscribe(() => {
+      // resize all views
+      this.views.forEach((_, id) => {
+        this.resizeView(id);
+      });
+    });
+
+    combineLatest([this.#views$, this.#activeViewId$]).subscribe(
+      ([views, activeViewId]) => {
+        const viewIds = Array.from(views.keys());
+        if (!viewIds.includes(activeViewId)) {
+          this.#activeViewId$.next(viewIds.at(-1));
+        }
+      }
+    );
 
     return window;
   }
@@ -76,7 +117,7 @@ class AppWindow {
       },
     });
 
-    this.views.set("shell", view);
+    this.shellView = view;
 
     this.window.on("resize", () => {
       this.resizeView("shell");
@@ -92,8 +133,8 @@ class AppWindow {
   }
 
   resizeView(id: string) {
-    const view = this.views.get(id);
     const { width, height } = this.window.getContentBounds();
+    const view = this.getViewById(id);
     if (id === "shell") {
       view.setBounds({ x: 0, y: 0, width, height });
       return;
@@ -129,7 +170,7 @@ class AppWindow {
     });
     this.window.addBrowserView(view);
 
-    this.views.set(id, view);
+    this.#views$.next(this.views.set(id, view));
     this.window.setTopBrowserView(view);
 
     this.window.on("resize", () => {
@@ -143,20 +184,18 @@ class AppWindow {
 
     this.showView(id);
     this.resizeView(id);
-    this.notifyTabsUpdated();
   }
 
   removeView(id: string) {
-    const view = this.views.get(id);
+    const view = this.getViewById(id);
     if (view) {
       this.window.removeBrowserView(view);
-      this.views.delete(id);
+      this.#views$.next(this.views.delete(id) && this.views);
     }
-    this.notifyTabsUpdated();
   }
 
   toWebContentId(id: string) {
-    const view = this.views.get(id);
+    const view = this.getViewById(id);
     if (view) {
       return view.webContents.id;
     }
@@ -173,13 +212,12 @@ class AppWindow {
   }
 
   showView(id: string) {
-    this.activeViewId = id;
+    this.#activeViewId$.next(id);
     const view = this.views.get(id);
     if (view) {
       this.window.setTopBrowserView(view);
     }
-    this.revealDevTools(id);
-    this.notifyActiveTabChanged();
+    // this.revealDevTools(id);
   }
 
   closeDevTools() {
@@ -196,44 +234,10 @@ class AppWindow {
 
   revealDevTools(id: string) {
     this.closeDevTools();
-    const view = this.views.get(id);
+    const view = this.getViewById(id);
     if (view) {
       view.webContents.openDevTools();
     }
-  }
-
-  onTabsUpdated(callback: (tabs: string[]) => void) {
-    this.listeners.tabsUpdated = this.listeners.tabsUpdated || [];
-    this.listeners.tabsUpdated.push(() => {
-      callback(this.viewIds);
-    });
-  }
-
-  onActiveTabChanged(callback: (tabId: string) => void) {
-    this.listeners.activeTabChanged = this.listeners.activeTabChanged || [];
-    this.listeners.activeTabChanged.push(() => {
-      callback(this.activeViewId);
-    });
-  }
-
-  notifyTabsUpdated() {
-    if (this.listeners.tabsUpdated) {
-      this.listeners.tabsUpdated.forEach((callback) => {
-        callback(this.viewIds);
-      });
-    }
-  }
-
-  notifyActiveTabChanged() {
-    if (this.listeners.activeTabChanged) {
-      this.listeners.activeTabChanged.forEach((callback) => {
-        callback(this.activeViewId);
-      });
-    }
-
-    this.views.forEach((_, id) => {
-      this.resizeView(id);
-    });
   }
 }
 
