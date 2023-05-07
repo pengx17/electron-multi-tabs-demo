@@ -44,31 +44,28 @@ export const handlers = {
 }
 
 export const events = {
-  onTabsUpdated: () => {
+  onTabsUpdated: (fn: (tabs: string[]) => void) => {
     const window = getOrCreateAppWindow();
-    const callback: (tabs: string[]) => void = (tabs) => {
-      window.allViews.forEach((view) => {
-        view.webContents.send("onTabsUpdated", tabs);
-      });
-    };
-    return window.viewIds$.subscribe((ids) => {
-      callback(ids);
+    const unsub = window.viewIds$.subscribe((ids) => {
+      fn(ids);
     });
+    return () => {
+      unsub.unsubscribe();
+    }
   },
-  onActiveTabChanged: () => {
+  onActiveTabChanged: (fn: (tab: string) => void) => {
     const window = getOrCreateAppWindow();
-    const callback: (tab: string) => void = (tab) => {
-      window.allViews.forEach((view) => {
-        view.webContents.send("onActiveTabChanged", tab);
-      });
-    };
-    return window.activeViewId$.subscribe((id) => {
-      callback(id);
+    const unsub =  window.activeViewId$.subscribe((id) => {
+      fn(id);
     });
+    return () => {
+      unsub.unsubscribe();
+    }
   },
 };
 
 export function registerHandlers() {
+  const window = getOrCreateAppWindow();
   for (const [namespace, namespaceHandlers] of Object.entries(handlers)) {
     for (const [key, handler] of Object.entries(namespaceHandlers)) {
       const name = `${namespace}:${key}`;
@@ -80,9 +77,13 @@ export function registerHandlers() {
   // register events
   for (const [name, handler] of Object.entries(events)) {
     logger.info(`Register event "${name}"`);
-    const subscription = handler();
+    const subscription = handler((...args) => {
+      window.allViews.forEach((view) => {
+        view.webContents.send(name, ...args);
+      });
+    });
     app.on("before-quit", () => {
-      subscription.unsubscribe();
+      subscription();
     });
   }
 }

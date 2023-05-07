@@ -8,7 +8,7 @@ const useTabIds = () => {
       setTabIds(ids);
     });
 
-    window.events.onTabsUpdated((tabs) => {
+    return window.events.onTabsUpdated((tabs) => {
       setTabIds(tabs);
     });
   }, []);
@@ -24,7 +24,7 @@ const useActiveTabId = () => {
       setActiveTabId(id);
     });
 
-    window.events.onActiveTabChanged((id) => {
+    return window.events.onActiveTabChanged((id) => {
       setActiveTabId(id);
     });
   });
@@ -50,7 +50,7 @@ export const App = () => {
               <div
                 key={id}
                 className={
-                  "group px-4 py-2 bg-slate-200 hover:bg-slate-300 flex items-center" +
+                  "group px-4 py-2 bg-slate-200 hover:bg-slate-300 flex items-center rounded-t-md" +
                   (id === activeTabId ? " bg-slate-300" : "")
                 }
                 onClick={() => {
@@ -61,7 +61,7 @@ export const App = () => {
 
                 {canClose && (
                   <button
-                    className="invisible group-hover:visible ml-2 w-4 h-4 bg-slate-200 hover:bg-slate-100 text-[10px]"
+                    className="invisible group-hover:visible ml-2 -mr-2 w-4 h-4 bg-slate-200 hover:bg-slate-100 text-[10px]"
                     onClick={() => {
                       window.apis.ui.removeTab(id);
                     }}

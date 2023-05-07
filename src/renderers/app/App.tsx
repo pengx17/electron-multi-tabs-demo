@@ -10,7 +10,7 @@ const useActiveTabId = () => {
       setActiveTabId(id);
     });
 
-    window.events.onActiveTabChanged((id) => {
+    return window.events.onActiveTabChanged((id) => {
       setActiveTabId(id);
     });
   });
