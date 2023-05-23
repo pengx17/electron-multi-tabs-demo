@@ -110,7 +110,6 @@ async function watchMain() {
           name: "electron-dev:reload-app-on-main-change",
           setup(build) {
             build.onEnd(() => {
-              execSync('yarn generate-handlers-meta');
               if (initialBuild) {
                 console.log(`[main] has changed, [re]launching electron...`);
                 spawnOrReloadElectron();

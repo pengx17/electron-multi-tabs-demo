@@ -43,6 +43,7 @@ export const handlers = {
   ui: uiHandlers
 }
 
+// event listeners are attached to main event stream which are exposed as Observables
 export const events = {
   onTabsUpdated: (fn: (tabs: string[]) => void) => {
     const window = getOrCreateAppWindow();

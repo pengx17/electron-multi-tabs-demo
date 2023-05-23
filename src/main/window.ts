@@ -6,7 +6,27 @@ import { BehaviorSubject, combineLatest, map, merge, zip } from "rxjs";
 
 import { logger } from "./logger";
 
+import { events, handlers } from "./handlers";
+
 const TAB_HEIGHT = 40;
+
+const exposedMeta = (() => {
+  const handlersMeta = Object.entries(handlers).map(
+    ([namespace, namespaceHandlers]) => {
+      return [
+        namespace,
+        Object.keys(namespaceHandlers).map((handlerName) => handlerName),
+      ];
+    }
+  );
+
+  const eventsMeta = Object.keys(events);
+
+  return {
+    events: eventsMeta,
+    handlers: handlersMeta,
+  };
+})();
 
 class AppWindow {
   // multiple tabs
@@ -43,7 +63,7 @@ class AppWindow {
   }
 
   getViewById(id: string) {
-    if (id === 'shell') {
+    if (id === "shell") {
       return this.shellView;
     } else {
       return this.views.get(id);
@@ -115,7 +135,10 @@ class AppWindow {
         sandbox: false,
         spellcheck: false,
         preload: join(__dirname, "../preload/index.js"),
-        additionalArguments: [`--id=shell`],
+        additionalArguments: [
+          `--id=shell`,
+          `--exposed-meta=` + JSON.stringify(exposedMeta),
+        ],
       },
     });
 
@@ -167,7 +190,10 @@ class AppWindow {
         sandbox: false,
         spellcheck: false,
         preload: join(__dirname, "../preload/index.js"),
-        additionalArguments: [`--id=${id}`],
+        additionalArguments: [
+          `--id=${id}`,
+          `--exposed-meta=` + JSON.stringify(exposedMeta),
+        ],
       },
     });
     this.window.addBrowserView(view);
