@@ -837,6 +837,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"async-call-rpc@npm:^6.3.1":
+  version: 6.3.1
+  resolution: "async-call-rpc@npm:6.3.1"
+  checksum: 024e1bab4752b3aa66145977d534e6dc4c316e1d746c11a6a5076b30b16d42fa0ce4793be5a330319644f1335b01cbe13ee4ac28454cded37b1c803608400934
+  languageName: node
+  linkType: hard
+
 "autoprefixer@npm:^10.4.14":
   version: 10.4.14
   resolution: "autoprefixer@npm:10.4.14"
@@ -1293,6 +1300,7 @@ __metadata:
     "@types/react": ^18.2.0
     "@types/react-dom": ^18.2.1
     "@vitejs/plugin-react": ^4.0.0
+    async-call-rpc: ^6.3.1
     autoprefixer: ^10.4.14
     concurrently: ^8.0.1
     electron: ^24.1.3

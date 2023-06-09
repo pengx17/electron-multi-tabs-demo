@@ -3,6 +3,7 @@ import { app, MessageChannelMain } from "electron";
 import { logger } from "./logger";
 import { getOrCreateAppWindow } from "./window";
 import { registerHandlers } from "./handlers";
+import { spawnHelperProcess } from "./helper-process";
 
 /**
  * Prevent multiple instances
@@ -30,6 +31,7 @@ app
   .whenReady()
   .then(getOrCreateAppWindow)
   .then(registerHandlers)
+  .then(spawnHelperProcess)
   .catch((e) => console.error("Failed create window:", e));
 
 app.name = "Affine";

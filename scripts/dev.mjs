@@ -1,4 +1,4 @@
-import { execSync, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 
 import electronPath from "electron";
 import * as esbuild from "esbuild";
@@ -56,38 +56,10 @@ function spawnOrReloadElectron() {
 
 const common = config();
 
-function watchPreload() {
-  return new Promise(async (res) => {
-    let initialBuild = false;
-    const preloadBuild = await esbuild.context({
-      ...common.preload,
-      plugins: [
-        ...(common.preload.plugins ?? []),
-        {
-          name: "electron-dev:reload-app-on-preload-change",
-          setup(build) {
-            build.onEnd(() => {
-              if (initialBuild) {
-                console.log(`[preload] has changed, [re]launching electron...`);
-                spawnOrReloadElectron();
-              } else {
-                res();
-                initialBuild = true;
-              }
-            });
-          },
-        },
-      ],
-    });
-    // watch will trigger build.onEnd() on first run & on subsequent changes
-    await preloadBuild.watch();
-  });
-}
-
-async function watchMain() {
+async function watch() {
   return new Promise(async (res) => {
     const define = {
-      ...common.main.define,
+      ...common.define,
       "process.env.NODE_ENV": `"${mode}"`,
     };
 
@@ -101,17 +73,19 @@ async function watchMain() {
 
     let initialBuild = false;
 
-    const mainBuild = await esbuild.context({
-      ...common.main,
+    const buildContext = await esbuild.context({
+      ...common,
       define: define,
       plugins: [
-        ...(common.main.plugins ?? []),
+        ...(common.plugins ?? []),
         {
-          name: "electron-dev:reload-app-on-main-change",
+          name: "electron-dev:reload-app-on-change",
           setup(build) {
             build.onEnd(() => {
               if (initialBuild) {
-                console.log(`[main] has changed, [re]launching electron...`);
+                console.log(
+                  `[electron code] has changed, [re]launching electron...`
+                );
                 spawnOrReloadElectron();
               } else {
                 res();
@@ -122,13 +96,12 @@ async function watchMain() {
         },
       ],
     });
-    await mainBuild.watch();
+    await buildContext.watch();
   });
 }
 
 async function main() {
-  await watchMain();
-  await watchPreload();
+  await watch();
   spawnOrReloadElectron();
   console.log(`Electron is started, watching for changes...`);
 }

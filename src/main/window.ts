@@ -37,8 +37,13 @@ class AppWindow {
   );
   #activeViewId$ = new BehaviorSubject<string>(null);
 
-  views$ = this.#views$.asObservable();
+  viewsMapping$ = this.#views$.asObservable();
   viewIds$ = this.#views$.pipe(map((views) => Array.from(views.keys())));
+  allViewsMapping$ = this.viewsMapping$.pipe(
+    map((views) => {
+      return new Map(views.entries()).set("shell", this.shellView);
+    })
+  );
   activeViewId$ = this.#activeViewId$.asObservable();
 
   constructor() {

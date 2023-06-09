@@ -1,19 +1,46 @@
+import { EventBasedChannel, AsyncCall } from "async-call-rpc";
+
+import { logger } from "../main/logger";
+
 type MessageHandler = (e: {
   ports: Electron.MessagePortMain[];
   data: any;
 }) => void;
 
-let rendererConnection: Electron.MessagePortMain | null = null;
+export function add(x: number, y: number) {
+  return x + y;
+}
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const server = {
+  add,
+  sleep,
+};
 
 const messageHandler: MessageHandler = (e) => {
-  console.log(e);
-  rendererConnection = e.ports[0];
-  beginWork(e.data);
+  if (e.data.type === "add-view" && e.ports.length === 1) {
+    logger.info("[helper] Received init-port message");
+    const connection = e.ports[0];
+    AsyncCall(server, {
+      channel: {
+        on(listener) {
+          const f = (e: Electron.MessageEvent) => {
+            listener(e.data);
+          };
+          connection.on("message", f);
+          connection.start();
+          return () => {
+            connection.off("message", f);
+            connection.close();
+          };
+        },
+        send(data) {
+          connection.postMessage(data);
+        },
+      } satisfies EventBasedChannel,
+    });
+  }
 };
 
 process.parentPort.on("message", messageHandler);
-
-function beginWork(data: any) {
-  // After work
-  rendererConnection?.postMessage({ result: data });
-}

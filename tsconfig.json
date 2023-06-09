@@ -1,10 +1,12 @@
 {
   "include": [],
   "compilerOptions": {
+    "target": "ESNext",
     "composite": true,
     "module": "ESNext",
     "moduleResolution": "Node",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true
   },
   "references": [
     {
