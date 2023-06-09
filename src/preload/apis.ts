@@ -1,6 +1,8 @@
 import { ipcRenderer } from "electron";
 import type { handlers, events as mainEvents } from "../main/handlers";
 
+import 'node:worker_threads';
+
 type WithoutFirstParameter<T> = T extends (_: any, ...args: infer P) => infer R
   ? (...args: P) => R
   : T;
@@ -74,3 +76,12 @@ export const events: Events = (() => {
 export const appInfo = {
   id: process.argv.find((arg) => arg.startsWith("--id="))?.split("=")[1],
 };
+
+ipcRenderer.on("port", (e) => {
+  const helperPort = e.ports[0];
+  console.log("port", helperPort);
+  helperPort.on("message", (data) => {
+    console.log("data", data);
+  });
+  helperPort.postMessage("hello from renderer");
+});

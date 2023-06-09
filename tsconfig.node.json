@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "types": ["node", "electron"],
+    "lib": [] // Remove the default DOM libs
+  },
+  "include": ["src/helper", "src/main", "src/preload"]
+}

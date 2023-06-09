@@ -9,7 +9,7 @@ export const NODE_MAJOR_VERSION = 18;
 export const config = () => {
   return {
     main: {
-      entryPoints: [resolve(root, "./src/main/index.ts")],
+      entryPoints: [resolve(root, "./src/main/index.ts"), resolve(root, "./src/helper/index.ts")],
       outdir: resolve(root, "./dist/main"),
       bundle: true,
       target: `node${NODE_MAJOR_VERSION}`,
@@ -24,7 +24,6 @@ export const config = () => {
       target: `node${NODE_MAJOR_VERSION}`,
       platform: "node",
       external: ["electron"],
-      treeShaking: true,
     },
   };
 };
