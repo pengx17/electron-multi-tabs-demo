@@ -1,4 +1,6 @@
-import { ipcRenderer } from "electron";
+import { ipcRenderer, contextBridge } from "electron";
+import { EventBasedChannel, AsyncCall } from "async-call-rpc";
+
 import type { handlers, events as mainEvents } from "../main/handlers";
 
 type WithoutFirstParameter<T> = T extends (_: any, ...args: infer P) => infer R
@@ -74,3 +76,34 @@ export const events: Events = (() => {
 export const appInfo = {
   id: process.argv.find((arg) => arg.startsWith("--id="))?.split("=")[1],
 };
+
+ipcRenderer.on("port", (e) => {
+  console.log("Received port:", e, e.ports[0]);
+  const connection = e.ports[0];
+  const server = AsyncCall<any>(
+    {},
+    {
+      channel: {
+        on(listener) {
+          const f = (e: Electron.MessageEvent) => {
+            listener(e.data);
+          };
+          connection.onmessage = f;
+          connection.start();
+          return () => {
+            connection.onmessage = null;
+            connection.close();
+          }
+        },
+        send(data) {
+          connection.postMessage(data);
+        },
+      } satisfies EventBasedChannel,
+    }
+  );
+
+  contextBridge.exposeInMainWorld("server", {
+    add: server.add,
+    sleep: server.sleep,
+  });
+});

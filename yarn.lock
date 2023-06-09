@@ -647,6 +647,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^20.2.5":
+  version: 20.2.5
+  resolution: "@types/node@npm:20.2.5"
+  checksum: 38ce7c7e9d76880dc632f71d71e0d5914fcda9d5e9a7095d6c339abda55ca4affb0f2a882aeb29398f8e09d2c5151f0b6586c81c8ccdfe529c34b1ea3337425e
+  languageName: node
+  linkType: hard
+
 "@types/prop-types@npm:*":
   version: 15.7.5
   resolution: "@types/prop-types@npm:15.7.5"
@@ -827,6 +834,13 @@ __metadata:
   version: 5.0.2
   resolution: "arg@npm:5.0.2"
   checksum: 6c69ada1a9943d332d9e5382393e897c500908d91d5cb735a01120d5f71daf1b339b7b8980cbeaba8fd1afc68e658a739746179e4315a26e8a28951ff9930078
+  languageName: node
+  linkType: hard
+
+"async-call-rpc@npm:^6.3.1":
+  version: 6.3.1
+  resolution: "async-call-rpc@npm:6.3.1"
+  checksum: 024e1bab4752b3aa66145977d534e6dc4c316e1d746c11a6a5076b30b16d42fa0ce4793be5a330319644f1335b01cbe13ee4ac28454cded37b1c803608400934
   languageName: node
   linkType: hard
 
@@ -1282,9 +1296,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "electron-multi-tabs-demo@workspace:."
   dependencies:
+    "@types/node": ^20.2.5
     "@types/react": ^18.2.0
     "@types/react-dom": ^18.2.1
     "@vitejs/plugin-react": ^4.0.0
+    async-call-rpc: ^6.3.1
     autoprefixer: ^10.4.14
     concurrently: ^8.0.1
     electron: ^24.1.3

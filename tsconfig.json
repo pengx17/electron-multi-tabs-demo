@@ -1,0 +1,19 @@
+{
+  "include": [],
+  "compilerOptions": {
+    "target": "ESNext",
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true
+  },
+  "references": [
+    {
+      "path": "./tsconfig.renderer.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
+}

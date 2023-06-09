@@ -66,6 +66,7 @@ export const events = {
 };
 
 export function registerHandlers() {
+  logger.info("Register handlers");
   const window = getOrCreateAppWindow();
   for (const [namespace, namespaceHandlers] of Object.entries(handlers)) {
     for (const [key, handler] of Object.entries(namespaceHandlers)) {
