@@ -4,5 +4,5 @@
     "composite": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/renderers"]
+  "include": ["src/renderers", "src/preload"]
 }

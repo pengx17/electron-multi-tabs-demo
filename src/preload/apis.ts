@@ -85,15 +85,14 @@ ipcRenderer.on("port", (e) => {
     {
       channel: {
         on(listener) {
-          const f = (e: Electron.MessageEvent) => {
+          connection.onmessage = (e) => {
             listener(e.data);
           };
-          connection.onmessage = f;
           connection.start();
           return () => {
             connection.onmessage = null;
             connection.close();
-          }
+          };
         },
         send(data) {
           connection.postMessage(data);
