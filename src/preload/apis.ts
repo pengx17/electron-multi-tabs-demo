@@ -102,5 +102,8 @@ ipcRenderer.on("port", (e) => {
     }
   );
 
-  contextBridge.exposeInMainWorld("server", server);
+  contextBridge.exposeInMainWorld("server", {
+    add: server.add,
+    sleep: server.sleep,
+  });
 });
