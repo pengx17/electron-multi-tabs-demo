@@ -2,6 +2,7 @@ import { app, ipcMain } from "electron";
 import { getOrCreateAppWindow } from "./window";
 import { logger } from "./logger";
 
+
 type Handler = (e: Electron.IpcMainInvokeEvent, ...args: any[]) => Promise<any>;
 
 export const uiHandlers = {

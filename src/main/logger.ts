@@ -1,7 +1,9 @@
 import { shell } from 'electron';
 import log from 'electron-log';
 
-export const logger = log;
+log.initialize();
+
+export const logger = log.scope('main');
 
 export function revealLogFile() {
   const filePath = log.transports.file.getFile().path;

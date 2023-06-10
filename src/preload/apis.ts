@@ -77,27 +77,31 @@ export const appInfo = {
   id: process.argv.find((arg) => arg.startsWith("--id="))?.split("=")[1],
 };
 
+const createMessagePortChannel = (port: MessagePort): EventBasedChannel => {
+  return {
+    on(listener) {
+      port.onmessage = (e) => {
+        listener(e.data);
+      };
+      port.start();
+      return () => {
+        port.onmessage = null;
+        port.close();
+      };
+    },
+    send(data) {
+      port.postMessage(data);
+    },
+  };
+};
+
 ipcRenderer.on("port", (e) => {
   console.log("Received port:", e, e.ports[0]);
   const connection = e.ports[0];
   const server = AsyncCall<any>(
     {},
     {
-      channel: {
-        on(listener) {
-          connection.onmessage = (e) => {
-            listener(e.data);
-          };
-          connection.start();
-          return () => {
-            connection.onmessage = null;
-            connection.close();
-          };
-        },
-        send(data) {
-          connection.postMessage(data);
-        },
-      } satisfies EventBasedChannel,
+      channel: createMessagePortChannel(connection),
     }
   );
 

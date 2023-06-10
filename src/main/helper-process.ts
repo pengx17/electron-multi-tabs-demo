@@ -6,7 +6,7 @@ import { getOrCreateAppWindow } from "./window";
 import { logger } from "./logger";
 
 export function spawnHelperProcess() {
-  logger.info("[main] spawning utilityProcess ...");
+  logger.info("spawning utilityProcess ...");
   const helperProcess = utilityProcess.fork(
     path.join(__dirname, "../helper/index.js")
   );
@@ -28,19 +28,19 @@ export function spawnHelperProcess() {
       [port2]
     );
 
-    logger.info("[main] connection", key);
+    logger.info("connection", key);
 
     return () => {
       port1.close();
       port2.close();
       subscriptions.delete(view);
-      logger.info("[main] closed connection", key);
+      logger.info("closed connection", key);
     };
   }
 
   helperProcess
     .on("spawn", () => {
-      logger.info("[main] spawned new utilityProcess");
+      logger.info("spawned new utilityProcess");
 
       const window = getOrCreateAppWindow();
       let prevViews = new Set<BrowserView>();
@@ -65,10 +65,10 @@ export function spawnHelperProcess() {
       });
     })
     .on("message", (message) => {
-      logger.info("[main] message from utilityProcess", message);
+      logger.info("message from utilityProcess", message);
     })
     .on("exit", (code) => {
-      logger.info("[main] existing utilityProcess");
+      logger.info("existing utilityProcess");
       subscriptions.forEach((unsubscribe) => unsubscribe());
     });
 

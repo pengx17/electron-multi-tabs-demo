@@ -1,8 +1,8 @@
 import { BrowserView, BrowserWindow } from "electron";
 import electronWindowState from "electron-window-state";
-import { join } from "node:path";
 import { nanoid } from "nanoid";
-import { BehaviorSubject, combineLatest, map, merge, zip } from "rxjs";
+import { join } from "node:path";
+import { BehaviorSubject, combineLatest, map } from "rxjs";
 
 import { logger } from "./logger";
 
