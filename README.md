@@ -8,4 +8,5 @@ use BrowserView to serve two different types of renderer views (shell/app)
 
 Some other features:
 - Electron APIs definitions exposed via preload are generated from handlers in main. You can jump to the real definition easily.
-
+- Experiment UtilityProcess to offload heavy computation off main process
+- Using https://github.com/Jack-Works/async-call-rpc#builtin-channels to sync events between helper process & renderer
