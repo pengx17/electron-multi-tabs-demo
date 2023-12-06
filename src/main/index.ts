@@ -1,8 +1,8 @@
-import { app, MessageChannelMain } from "electron";
+import { app } from "electron";
 
 import { logger } from "./logger";
-import { getOrCreateAppWindow } from "./window";
-import { registerHandlers } from "./handlers";
+import { createAppWindow } from "./window";
+import { events, handlers, registerHandlers } from "./handlers";
 import { spawnHelperProcess } from "./helper-process";
 
 /**
@@ -29,7 +29,27 @@ app.on("window-all-closed", () => {
  */
 app
   .whenReady()
-  .then(getOrCreateAppWindow)
+  .then(() => {
+    const exposedMeta = (() => {
+      const handlersMeta = Object.entries(handlers).map(
+        ([namespace, namespaceHandlers]) => {
+          return [
+            namespace,
+            Object.keys(namespaceHandlers).map((handlerName) => handlerName),
+          ];
+        }
+      );
+
+      const eventsMeta = Object.keys(events);
+
+      return {
+        events: eventsMeta,
+        handlers: handlersMeta,
+      };
+    })();
+
+    return createAppWindow(exposedMeta);
+  })
   .then(registerHandlers)
   .then(spawnHelperProcess)
   .catch((e) => console.error("Failed create window:", e));

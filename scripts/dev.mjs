@@ -57,7 +57,7 @@ function spawnOrReloadElectron() {
 const common = config();
 
 async function watch() {
-  return new Promise(async (res) => {
+  return new Promise((res) => {
     const define = {
       ...common.define,
       "process.env.NODE_ENV": `"${mode}"`,
@@ -73,30 +73,33 @@ async function watch() {
 
     let initialBuild = false;
 
-    const buildContext = await esbuild.context({
-      ...common,
-      define: define,
-      plugins: [
-        ...(common.plugins ?? []),
-        {
-          name: "electron-dev:reload-app-on-change",
-          setup(build) {
-            build.onEnd(() => {
-              if (initialBuild) {
-                console.log(
-                  `[electron code] has changed, [re]launching electron...`
-                );
-                spawnOrReloadElectron();
-              } else {
-                res();
-                initialBuild = true;
-              }
-            });
+    esbuild
+      .context({
+        ...common,
+        define: define,
+        plugins: [
+          ...(common.plugins ?? []),
+          {
+            name: "electron-dev:reload-app-on-change",
+            setup(build) {
+              build.onEnd(() => {
+                if (initialBuild) {
+                  console.log(
+                    `[electron code] has changed, [re]launching electron...`
+                  );
+                  spawnOrReloadElectron();
+                } else {
+                  res();
+                  initialBuild = true;
+                }
+              });
+            },
           },
-        },
-      ],
-    });
-    await buildContext.watch();
+        ],
+      })
+      .then((context) => {
+        context.watch();
+      });
   });
 }
 

@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../lib/preload",
+    "composite": true
+  },
+  "include": ["./**.ts", "./**.tsx"],
+  "references": [
+    {
+      // todo: renderer should not have access to node right?
+      "path": "../main/tsconfig.json"
+    }
+  ]
+}

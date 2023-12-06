@@ -6,27 +6,7 @@ import { BehaviorSubject, combineLatest, map } from "rxjs";
 
 import { logger } from "./logger";
 
-import { events, handlers } from "./handlers";
-
 const TAB_HEIGHT = 40;
-
-const exposedMeta = (() => {
-  const handlersMeta = Object.entries(handlers).map(
-    ([namespace, namespaceHandlers]) => {
-      return [
-        namespace,
-        Object.keys(namespaceHandlers).map((handlerName) => handlerName),
-      ];
-    }
-  );
-
-  const eventsMeta = Object.keys(events);
-
-  return {
-    events: eventsMeta,
-    handlers: handlersMeta,
-  };
-})();
 
 class AppWindow {
   // multiple tabs
@@ -46,7 +26,7 @@ class AppWindow {
   );
   activeViewId$ = this.#activeViewId$.asObservable();
 
-  constructor() {
+  constructor(public exposedMeta: any) {
     this.window = this.createWindow();
   }
 
@@ -142,7 +122,7 @@ class AppWindow {
         preload: join(__dirname, "../preload/index.js"),
         additionalArguments: [
           `--id=shell`,
-          `--exposed-meta=` + JSON.stringify(exposedMeta),
+          `--exposed-meta=` + JSON.stringify(this.exposedMeta),
         ],
       },
     });
@@ -197,7 +177,7 @@ class AppWindow {
         preload: join(__dirname, "../preload/index.js"),
         additionalArguments: [
           `--id=${id}`,
-          `--exposed-meta=` + JSON.stringify(exposedMeta),
+          `--exposed-meta=` + JSON.stringify(this.exposedMeta),
         ],
       },
     });
@@ -276,10 +256,14 @@ class AppWindow {
 
 let window: AppWindow;
 
-export function getOrCreateAppWindow() {
+export function getAppWindow() {
+  return window;
+}
+
+export function createAppWindow(exposedMeta: any) {
   if (!window) {
     // will create a new browser window on instantiation
-    window = new AppWindow();
+    window = new AppWindow(exposedMeta);
   }
   return window;
 }

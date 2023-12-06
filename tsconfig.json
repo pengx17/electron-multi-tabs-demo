@@ -6,14 +6,18 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "skipLibCheck": true
   },
   "references": [
     {
-      "path": "./tsconfig.renderer.json"
+      "path": "./src/helper/tsconfig.json"
     },
     {
-      "path": "./tsconfig.node.json"
+      "path": "./src/main/tsconfig.json"
+    },
+    {
+      "path": "./src/renderers/tsconfig.json"
     }
   ]
 }

@@ -1,9 +1,10 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "outDir": "../lib/main",
     "composite": true,
     "types": ["node", "electron"],
     "lib": [] // Remove the default DOM libs
   },
-  "include": ["src/helper", "src/main"]
+  "include": ["./**/*.ts"]
 }

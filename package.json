@@ -18,14 +18,18 @@
     "electron-window-state": "^5.0.3",
     "esbuild": "^0.17.18",
     "nanoid": "^4.0.2",
+    "oxlint": "^0.0.18",
     "postcss": "^8.4.23",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rxjs": "^7.8.1",
     "tailwindcss": "^3.3.2",
+    "typescript": "^5.3.2",
     "zx": "^7.2.2"
   },
   "scripts": {
+    "lint": "oxlint --deny-warnings --import-plugin -D correctness -D nursery -D prefer-array-some -D no-useless-promise-resolve-reject -A no-undef -A consistent-type-exports -A default -A named -A ban-ts-comment",
+    "typecheck": "tsc -b tsconfig.json --diagnostics",
     "dev:ui:app": "cd src/renderers/app && vite",
     "dev:ui:shell": "cd src/renderers/shell && vite",
     "dev:electron": "node scripts/dev.mjs",

@@ -1,14 +1,22 @@
 import path from "node:path";
 
-import { BrowserView, MessageChannelMain, app, utilityProcess } from "electron";
+import {
+  BrowserView,
+  MessageChannelMain,
+  app,
+  dialog,
+  utilityProcess,
+} from "electron";
 
-import { getOrCreateAppWindow } from "./window";
+import { getAppWindow } from "./window";
 import { logger } from "./logger";
+import { AsyncCall } from "async-call-rpc/base";
 
 export function spawnHelperProcess() {
   logger.info("spawning utilityProcess ...");
   const helperProcess = utilityProcess.fork(
-    path.join(__dirname, "../helper/index.js")
+    path.join(__dirname, "../helper/index.js"),
+    null
   );
 
   const subscriptions = new Map<BrowserView, () => void>();
@@ -42,7 +50,7 @@ export function spawnHelperProcess() {
     .on("spawn", () => {
       logger.info("spawned new utilityProcess");
 
-      const window = getOrCreateAppWindow();
+      const window = getAppWindow();
       let prevViews = new Set<BrowserView>();
 
       // whenever a new browser view is created, create a new port pair
@@ -71,6 +79,27 @@ export function spawnHelperProcess() {
       logger.info("existing utilityProcess");
       subscriptions.forEach((unsubscribe) => unsubscribe());
     });
+
+  AsyncCall(
+    {
+      "dialog.showOpenDialog": dialog.showOpenDialog,
+      getAppPath: app.getAppPath.bind(app),
+      getPath: app.getPath.bind(app),
+    },
+    {
+      channel: {
+        on(listener: (data: unknown) => void) {
+          helperProcess.addListener("message", listener);
+          return () => {
+            this.worker.removeListener("message", listener);
+          };
+        },
+        send(data: unknown) {
+          helperProcess.postMessage(data);
+        },
+      },
+    }
+  );
 
   // do we need the following?
   app.on("before-quit", () => {

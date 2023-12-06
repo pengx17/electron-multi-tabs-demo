@@ -108,5 +108,11 @@ ipcRenderer.on("port", (e) => {
   contextBridge.exposeInMainWorld("server", {
     add: server.add,
     sleep: server.sleep,
+    foo: {
+      bar: server["foo.bar"],
+    },
+    getAppPath: server.getAppPath,
+    getPath: server.getPath,
+    onHB: server.onHB,
   });
 });

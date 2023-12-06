@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../lib/renderers",
+    "composite": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["./**/*.ts", "./**/*.tsx"],
+  "references": [
+    {
+      // todo: renderer should not have access to node right?
+      "path": "../preload/tsconfig.json"
+    }
+  ]
+}
